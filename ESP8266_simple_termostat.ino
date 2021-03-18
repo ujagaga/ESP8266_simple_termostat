@@ -5,9 +5,9 @@
 #include <WiFiClient.h>
 #include <ArduinoOTA.h>
 
-#define ONE_WIRE_BUS  0
+#define ONE_WIRE_BUS  2
 #define LED_PIN       1
-#define HEATER_PIN    2
+#define HEATER_PIN    0
 #define target        118
 
 OneWire oneWire(ONE_WIRE_BUS);
