@@ -3,24 +3,27 @@
 #include <ESP8266WiFi.h>
 #include <ESP8266WebServer.h>
 #include <WiFiClient.h>
+#include <DNSServer.h>
 #include <ArduinoOTA.h>
 
 #define ONE_WIRE_BUS  2
 #define LED_PIN       1
 #define HEATER_PIN    0
-#define target        118
+#define target        120
+#define DNS_PORT      53
 
 OneWire oneWire(ONE_WIRE_BUS);
 DallasTemperature sensor(&oneWire);
 // arrays to hold device address
 DeviceAddress insideThermometer;
-
+static DNSServer dnsServer;
 static ESP8266WebServer server(80);
+static IPAddress apIP(192, 168, 4, 1);
 float tempC = 0;
 static bool updateStartedFlag = false;
 
-static String html1 = "<!DOCTYPE HTML><html><head><title>Thermostat</title></head><body><h1>";
-static String html2 = "<span>&#8451;</span></h1><script>setInterval(function(){location.reload();},3000);</script></body></html>";
+static String html1 = "<!DOCTYPE HTML><html><head><title>Thermostat</title></head><body style=\"background-color:black;\"><center><p style=\"font-size:25vw;color:#FFC300;margin:0;\">";
+static String html2 = "<span>&#8451;</span></p></center><script>setInterval(function(){location.reload();},3000);</script></body></html>";
 
 
 void OTA_init() {
@@ -57,7 +60,7 @@ void OTA_init() {
 }
 
 void handleRoot() {
-  server.send(200, "text/html", html1 + String(tempC) + html2);  
+  server.send(200, "text/html", html1 + String(tempC, 1) + html2);  
 }
 
 void handleNotFound(){
@@ -106,6 +109,8 @@ void setup(void)
   if(result == true)
   {
     Serial.println("Ready");
+    /* if DNSServer is started with "*" for domain name, it will reply with provided IP to all DNS request */
+    dnsServer.start(DNS_PORT, "*", apIP);
   }
   else
   {
@@ -134,7 +139,7 @@ void loop(void)
 //    Serial.println(tempC);
 
   
-    if(tempC > target){
+    if((tempC > target) || (tempC < -30)){
        digitalWrite(HEATER_PIN, LOW);
        digitalWrite(LED_PIN, LOW);
     }else{
@@ -143,5 +148,7 @@ void loop(void)
     }
 
     server.handleClient(); 
+
+    dnsServer.processNextRequest();
   }   
 }
