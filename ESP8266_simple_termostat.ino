@@ -7,8 +7,7 @@
 #include <ArduinoOTA.h>
 
 #define ONE_WIRE_BUS  2
-#define LED_PIN       1
-#define HEATER_PIN    0
+#define HEATER_PIN    3   // UART RX
 #define target        120
 #define DNS_PORT      53
 
@@ -30,7 +29,7 @@ void OTA_init() {
 
   // Port defaults to 8266
   // ArduinoOTA.setPort(8266);
-  ArduinoOTA.setHostname("Silica_thermostat");  
+  ArduinoOTA.setHostname("PLA_thermostat");  
    
   ArduinoOTA.onStart([]() {
     String type;
@@ -84,7 +83,7 @@ void printAddress(DeviceAddress deviceAddress)
 void setup(void)
 {
   delay(100);   
-//  Serial.begi/n(115200);
+//  Serial.begin(115200);
   sensor.begin();
 
   // Prepare the sensor
@@ -105,7 +104,7 @@ void setup(void)
   
 
   Serial.print("Setting soft-AP ... ");
-  boolean result = WiFi.softAP("Silica_thermostat", "");
+  boolean result = WiFi.softAP("PLA_thermostat", "");
   if(result == true)
   {
     Serial.println("Ready");
@@ -118,7 +117,6 @@ void setup(void)
   }
 
   pinMode(HEATER_PIN, OUTPUT);
-  pinMode(LED_PIN, OUTPUT);
 
   server.on("/", handleRoot);              
   server.on("/start_ota_update", startOtaUpdate);
@@ -135,16 +133,11 @@ void loop(void)
   }else{
     sensor.requestTemperatures();
     tempC = sensor.getTempC(insideThermometer);
-//    Serial.print("Temp C: ");
-//    Serial.println(tempC);
-
   
-    if((tempC > target) || (tempC < -30)){
+    if((tempC > (target + 1)) || (tempC < -30)){
        digitalWrite(HEATER_PIN, LOW);
-       digitalWrite(LED_PIN, LOW);
-    }else{
+    }if(tempC < (target - 1)){
        digitalWrite(HEATER_PIN, HIGH);
-       digitalWrite(LED_PIN, HIGH);
     }
 
     server.handleClient(); 
